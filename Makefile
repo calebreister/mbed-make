@@ -34,11 +34,11 @@ LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scan
 LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys
 
 
-ifeq ($(DEBUG), 1)
-  CC_FLAGS += -DDEBUG -O0
-else
-  CC_FLAGS += -DNDEBUG -Os
-endif
+#ifeq ($(DEBUG), 1)
+CC_FLAGS += -DDEBUG -O0
+#else
+#  CC_FLAGS += -DNDEBUG -Os
+#endif
 
 .PHONY: all clean lst size
 
@@ -84,5 +84,3 @@ size: $(PROJECT).elf
 
 DEPS = $(OBJECTS:.o=.d) $(SYS_OBJECTS:.o=.d)
 -include $(DEPS)
-
-
