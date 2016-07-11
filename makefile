@@ -4,6 +4,7 @@ OBJECTS = obj/main.o
 DEST    = debug
 VPATH   = src lib $DEST
 TARGET  = NUCLEO_F446RE
+ELF     = $(DEST)/$(PROJECT).elf
 
 #Compilation options
 DEBUG = 1
@@ -19,23 +20,18 @@ SIZE    = $(GCC_BIN)arm-none-eabi-size
 
 include $(TARGET).mk
 
-CFLAGS = $(INCLUDE_PATHS) $(CC_SYMBOLS) $(CPU) -c -g -fno-common -fmessage-length=0 -Wall -Wextra -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer -MMD -MP
-
-ifeq ($(HARDFP),1)
-	FLOAT_ABI = hard
-else
-	FLOAT_ABI = softfp
-endif
-
 ifeq ($(DEBUG), 1)
-	CFLAGS += -DDEBUG -O0
+	CC_FLAGS += -DDEBUG -O0
 else
-	CFLAGS += -DNDEBUG -Os
+	CC_FLAGS += -DNDEBUG -Os
 endif
 
-LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main -Wl,-Map=$(PROJECT).map,--cref
-LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys 
+CC_FLAGS = $(CPU) $(INCLUDE_PATHS) $(CC_SYMBOLS) -c -g -fno-common -fmessage-length=0 -Wall -Wextra -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer -MMD -MP
 
+LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main -Wl,-Map=$(DEST)/$(PROJECT).map,--cref
+#`-u _printf_float -u _scanf_float` after --specs for floating point I/O
+
+LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys 
 LIBRARIES = -lmbed 
 
 .PHONY: all clean lst size
@@ -46,7 +42,7 @@ clean:
 	rm -f debug/* obj/* asm/* $(DEPS)
 
 obj/%.o: %.c
-	$(CC)  $(CC_FLAGS) $(CC_SYMBOLS) -std=c99 $(INCLUDE_PATHS) -o $@ $<
+	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) -std=c99 $(INCLUDE_PATHS) -o $@ $<
 
 obj/%.o: %.cc
 	$(CXX) $(CC_FLAGS) $(CC_SYMBOLS) -std=c++98 -fno-rtti $(INCLUDE_PATHS) -o $@ $<
@@ -57,22 +53,22 @@ obj/%.o: %.cpp
 obj/%.o: %.asm
 	$(CC) $(CPU) -c -x assembler-with-cpp -o asm/$@ $<
 
-$(PROJECT).elf: $(OBJECTS) $(SYS_OBJECTS)
-	$(LD) $(LD_FLAGS) -T$(LINKER_SCRIPT) $(LIBRARY_PATHS) -o $(DEST)/$@ $^ $(LIBRARIES) $(LD_SYS_LIBS) $(LIBRARIES) $(LD_SYS_LIBS)
+$(ELF): $(OBJECTS) $(SYS_OBJECTS)
+	$(LD) $(LD_FLAGS) -T$(LINKER_SCRIPT) $(LIBRARY_PATHS) -o $@ $^ -Wl,--start-group $(LIBRARIES) $(LD_SYS_LIBS) -Wl,--end-group
 
-$(PROJECT).bin: $(PROJECT).elf
-	$(OBJCOPY) -O binary $< $@
+$(PROJECT).bin: $(ELF)
+	$(OBJCOPY) -O binary $< $(DEST)/$@
 
-$(PROJECT).hex: $(PROJECT).elf
-	@$(OBJCOPY) -O ihex $< $@
+$(PROJECT).hex: $(ELF)
+	@$(OBJCOPY) -O ihex $< $(DEST)/$@
 
-$(PROJECT).lst: $(PROJECT).elf
-	@$(OBJDUMP) -Sdh $< > $@
+$(PROJECT).lst: $(ELF)
+	@$(OBJDUMP) -Sdh $< > $(DEST)/$@
 
 lst: $(PROJECT).lst
 
-size: $(PROJECT).elf
-	$(SIZE) $(PROJECT).elf
+size: $(ELF)
+	$(SIZE) $(ELF)
 
 DEPS = $(OBJECTS:.o=.d) $(SYS_OBJECTS:.o=.d)
 -include $(DEPS)

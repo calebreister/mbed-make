@@ -1,6 +1,6 @@
 #include "../lib/mbed/mbed.h"
 
-//DigitalOut myled(LED1);
+DigitalOut myled(LED1);
 
 int main() {
     int myled;
