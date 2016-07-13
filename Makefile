@@ -5,8 +5,6 @@ DEST    = debug
 VPATH   = src lib $DEST
 TARGET  = NUCLEO_F446RE
 ELF     = $(DEST)/$(PROJECT).elf
-
-#Compilation options
 DEBUG = 1
 
 #Tools
@@ -29,7 +27,6 @@ endif
 CC_FLAGS = $(CPU) $(INCLUDE_PATHS) $(CC_SYMBOLS) -c -g -fno-common -fmessage-length=0 -Wall -Wextra -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer -MMD -MP
 
 LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main -Wl,-Map=$(DEST)/$(PROJECT).map,--cref
-#`-u _printf_float -u _scanf_float` after --specs for floating point I/O
 
 LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys 
 LIBRARIES = -lmbed 
@@ -39,7 +36,7 @@ LIBRARIES = -lmbed
 all: $(PROJECT).bin $(PROJECT).hex
 
 clean:
-	rm -f debug/* obj/* asm/* $(DEPS)
+	rm -f debug/* obj/* asm/* release/* $(DEPS)
 
 obj/%.o: %.c
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) -std=c99 $(INCLUDE_PATHS) -o $@ $<
