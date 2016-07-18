@@ -1,13 +1,21 @@
 #include "mbed.h"
-
-DigitalOut myled(LED1);
-
+#include "rtos.h"
+ 
+DigitalOut led1(LED1);
+DigitalOut led2(LED2);
+ 
+void led2_thread(void const *args) {
+    while (true) {
+        led2 = !led2;
+        Thread::wait(1000);
+    }
+}
+ 
 int main() {
-    int myled;
-    while(1) {
-        myled = 1; // LED is ON
-        //wait(0.2); // 200 ms
-        myled = 0; // LED is OFF
-        //wait(1.0); // 1 sec
+    Thread thread(led2_thread);
+    
+    while (true) {
+        led1 = !led1;
+        Thread::wait(500);
     }
 }

@@ -1,5 +1,15 @@
+#Temporary files
 .directory
 *~
+\#*\#
+
+#Other repositories
 lib/mbed
+lib/mbed-rtos
+
+#Build and debugging data
 debug/*
+release/*
 obj/*
+*.d
+*.o
