@@ -6,7 +6,7 @@ PROJECT = Nucleo_blink
 OBJECTS = obj/main.o #$(call GETOBJ,src)
 DEST    = debug
 VPATH   = src $DEST lib obj
-TARGET  = NUCLEO_F446RE
+TARGET  = TARGET_NUCLEO_F446RE
 ELF     = $(DEST)/$(PROJECT).elf
 DEBUG = 1
 
@@ -35,7 +35,7 @@ CC_FLAGS = $(CPU) $(INCLUDE_PATHS) $(CC_SYMBOLS) -c -g -fno-common -fmessage-len
 LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main -Wl,-Map=$(DEST)/$(PROJECT).map,--cref
 
 LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys
-LIBRARY_PATHS = -L./lib/mbed/TARGET_$(TARGET)/TOOLCHAIN_GCC_ARM 
+LIBRARY_PATHS = -L./lib/mbed/$(TARGET)/TOOLCHAIN_GCC_ARM 
 LIBRARIES = -lmbed 
 
 .PHONY: all clean lst size update
