@@ -1,8 +1,8 @@
 #include "mbed.h"
 #include "rtos.h"
  
-DigitalOut led1(LED1);
-DigitalOut led2(LED2);
+DigitalOut led1(D2);
+DigitalOut led2(D3);
  
 void led2_thread(void const *args) {
     while (true) {
