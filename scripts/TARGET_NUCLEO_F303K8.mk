@@ -15,3 +15,6 @@ INCLUDE_PATHS = -I lib/ -I lib/mbed/ \
 
 SYS_OBJECTS = $(wildcard lib/mbed/$(TARGET)/TOOLCHAIN_GCC_ARM/*.o)
 
+#OpenOCD arguments
+OCD_ARGS = -f interface/stlink-v2-1.cfg -f target/stm32f3x.cfg
+FLASH_SCRIPT = -f scripts/stm32-flash.cfg

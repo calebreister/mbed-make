@@ -7,7 +7,7 @@ DigitalOut led2(D3);
 void led2_thread(void const *args) {
     while (true) {
         led2 = !led2;
-        Thread::wait(1000);
+        Thread::wait(100);
     }
 }
  

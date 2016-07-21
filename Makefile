@@ -1,14 +1,12 @@
-#One liner to assign source file names to object files...
-GETOBJ = $(shell ls $(1) | egrep "(\.[csS]|\.cc|\.cpp|\.asm)" | sed -e "s/^/obj\//;s/\(\.[csS]\|\.cc\|\.cpp\|\.asm\)/\.o/g") #| tr '\n' ' ')
-
 #Project parameters
 PROJECT = Nucleo_blink
-OBJECTS = obj/main.o #$(call GETOBJ,src)
-DEST    = debug
+OBJECTS = $(call GETOBJ,src)
 VPATH   = src $DEST lib obj
-TARGET  = TARGET_NUCLEO_F446RE
+TARGET  = NUCLEO_F303K8
+TARGET := TARGET_$(TARGET)
 ELF     = $(DEST)/$(PROJECT).elf
-DEBUG = 1
+DEBUG   = 1
+export DEST PROJECT
 
 #Tools
 AS      = $(GCC_BIN)arm-none-eabi-as
@@ -19,26 +17,35 @@ OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
 OBJDUMP = $(GCC_BIN)arm-none-eabi-objdump
 SIZE    = $(GCC_BIN)arm-none-eabi-size 
 
-INCLUDE_PATHS = -I lib -I lib/mbed
+#One liner to assign source file names to object files...
+GETOBJ = $(shell ls $(1) | egrep "(\.[csS]|\.cc|\.cpp|\.asm)" | sed -e "s/^/obj\//;s/\(\.[csS]\|\.cc\|\.cpp\|\.asm\)/\.o/g")
 
+#Compiler configuration
+INCLUDE_PATHS = -I lib/mbed
+CC_FLAGS = $(CPU) $(INCLUDE_PATHS) $(CC_SYMBOLS) -c -g -fno-common -fmessage-length=0 -Wall -Wextra -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer -MMD -MP
+ifeq ($(DEBUG), 1)
+	CC_FLAGS += -DDEBUG -O0
+	DEST = debug
+else
+	CC_FLAGS += -DNDEBUG -Os
+	DEST = release
+endif
+
+#Linker configuration
+LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main -Wl,-Map=$(DEST)/$(PROJECT).map,--cref
+LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys
+LIBRARY_PATHS = -L./lib/mbed/$(TARGET)/TOOLCHAIN_GCC_ARM
+LIBRARIES = -lmbed
+
+DEPS = $(OBJECTS:.o=.d) $(SYS_OBJECTS:.o=.d)
+-include $(DEPS)
+
+#Target-specific configuration
 include scripts/$(TARGET).mk
 include scripts/mbed-rtos.mk
 
-ifeq ($(DEBUG), 1)
-	CC_FLAGS += -DDEBUG -O0
-else
-	CC_FLAGS += -DNDEBUG -Os
-endif
-
-CC_FLAGS = $(CPU) $(INCLUDE_PATHS) $(CC_SYMBOLS) -c -g -fno-common -fmessage-length=0 -Wall -Wextra -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer -MMD -MP
-
-LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main -Wl,-Map=$(DEST)/$(PROJECT).map,--cref
-
-LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys
-LIBRARY_PATHS = -L./lib/mbed/$(TARGET)/TOOLCHAIN_GCC_ARM 
-LIBRARIES = -lmbed 
-
-.PHONY: all clean lst size update
+################################################################################
+.PHONY: all flash gdb clean lst size update
 
 all: $(PROJECT).bin $(PROJECT).hex
 
@@ -55,6 +62,12 @@ update:
 	cd lib/mbed && hg pull && hg update -r tip -C #hg pull lib/mbed
 	cd lib/mbed-rtos && hg pull && hg update -r tip -C #hg pull lib/mbed-rtos
 
+lst: $(PROJECT).lst
+
+size: $(ELF)
+	$(SIZE) $(ELF)
+
+################################################################################
 obj/%.o: %.c
 	$(CC) $(CC_FLAGS) $(CC_SYMBOLS) -std=c99 $(INCLUDE_PATHS) -o $@ $<
 
@@ -85,11 +98,10 @@ $(PROJECT).hex: $(ELF)
 $(PROJECT).lst: $(ELF)
 	@$(OBJDUMP) -Sdh $< > $(DEST)/$@
 
-lst: $(PROJECT).lst
-
-size: $(ELF)
-	$(SIZE) $(ELF)
-
-DEPS = $(OBJECTS:.o=.d) $(SYS_OBJECTS:.o=.d)
--include $(DEPS)
+#OpenOCD rules##################################################################
+#To use OpenOCD without root access, run these commands...
+# sudo ln -s /usr/share/openocd/contrib/99-openocd.rules /etc/udev/rules.d/
+# sudo udevadm control --reload-rules
+flash: $(PROJECT).bin
+	openocd $(OCD_ARGS) $(FLASH_SCRIPT)
 
