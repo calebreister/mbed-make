@@ -13,6 +13,7 @@ AS      = $(GCC_BIN)arm-none-eabi-as
 CC      = $(GCC_BIN)arm-none-eabi-gcc
 CXX     = $(GCC_BIN)arm-none-eabi-g++
 LD      = $(GCC_BIN)arm-none-eabi-gcc
+DBG     = $(GCC_BIN)arm-none-eabi-gdb
 OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
 OBJDUMP = $(GCC_BIN)arm-none-eabi-objdump
 SIZE    = $(GCC_BIN)arm-none-eabi-size 
@@ -48,6 +49,7 @@ include scripts/mbed-rtos.mk
 .PHONY: all flash gdb clean lst size update
 
 all: $(PROJECT).bin $(PROJECT).hex
+	printenv
 
 clean:
 	rm -f debug/* release/* obj/*
@@ -102,6 +104,17 @@ $(PROJECT).lst: $(ELF)
 #To use OpenOCD without root access, run these commands...
 # sudo ln -s /usr/share/openocd/contrib/99-openocd.rules /etc/udev/rules.d/
 # sudo udevadm control --reload-rules
+
+#Flash the project to 
 flash: $(PROJECT).bin
 	openocd $(OCD_ARGS) $(FLASH_SCRIPT)
 
+#Launch gdb with the appropriate scripts
+#If the $EMACS environment variable is defined, gdb will be launched within
+#emacs.
+gdb: $(ELF)
+ifeq ($(EMACS),t)
+	emacsclient -e "(gdb \"$(DBG) $(ELF) -i=mi -x $(CURDIR)/scripts/attach.gdb\")"
+else
+	$(DBG) $(ELF) -x $(CURDIR)/scripts/attach.gdb
+endif
