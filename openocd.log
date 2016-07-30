@@ -1,7 +1,0 @@
-Info : Unable to match requested speed 1000 kHz, using 950 kHz
-Info : Unable to match requested speed 1000 kHz, using 950 kHz
-Info : clock speed 950 kHz
-Error: open failed
-in procedure 'init' 
-in procedure 'ocd_bouncer'
-
