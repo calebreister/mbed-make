@@ -19,14 +19,9 @@
 # SOFTWARE.
 
 #Project parameters
-PROJECT = Nucleo_blink
-OBJECTS = $(call GETOBJ,src)
-VPATH   = src $DEST lib obj
-TARGET  = NUCLEO_F303K8
-TARGET := TARGET_$(TARGET)
-ELF     = $(DEST)/$(PROJECT).elf
+PROJECT = blinky
+TARGET  = TARGET_NUCLEO_F303K8
 DEBUG   = 1
-export DEST PROJECT
 
 #Tools
 AS      = $(GCC_BIN)arm-none-eabi-as
@@ -37,6 +32,12 @@ DBG     = $(GCC_BIN)arm-none-eabi-gdb
 OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
 OBJDUMP = $(GCC_BIN)arm-none-eabi-objdump
 SIZE    = $(GCC_BIN)arm-none-eabi-size 
+
+#File paths
+OBJECTS = $(call GETOBJ,src)
+VPATH   = src $DEST lib obj
+ELF     = $(DEST)/$(PROJECT).elf
+export DEST PROJECT
 
 #One liner to assign source file names to object files...
 GETOBJ = $(shell ls $(1) | egrep "(\.[csS]|\.cc|\.cpp|\.asm)" | sed -e "s/^/obj\//;s/\(\.[csS]\|\.cc\|\.cpp\|\.asm\)/\.o/g")
@@ -69,7 +70,6 @@ include scripts/mbed-rtos.mk
 .PHONY: all flash gdb clean lst size update
 
 all: $(PROJECT).bin $(PROJECT).hex
-	printenv
 
 clean:
 	rm -f debug/* release/* obj/*
